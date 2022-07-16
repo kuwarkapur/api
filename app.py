@@ -451,15 +451,12 @@ def preprocess(url):
     return res
 
 def model(img):
-    model=tf.keras.models.load_model('model/mod.h5')
+    model=tf.keras.models.load_model('mod.h5')
     c=model.predict(img)
     name=train[c.argmax()]
     
     return name
-@app.route("/", methods=['GET', 'POST'])                 #initialising
-def home():                                              #function call
 
-    return render_template('index.html') 
      
 @app.route("/predict/<path:url>")
 def predict(url):
