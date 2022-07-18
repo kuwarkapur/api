@@ -447,17 +447,16 @@ def preprocess(url):
     img=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     img=cv2.resize(img,(128,128),interpolation=cv2.INTER_AREA)
     img=tf.expand_dims(img,axis=0)
+    
     res=model(img)
     return res
 
 def model(img):
-    model=tf.keras.models.load_model('mod.h5')
+    model=tf.keras.models.load_model('model/mod.h5')
     c=model.predict(img)
     name=train[c.argmax()]
     
     return name
-
-     
 @app.route("/predict/<path:url>")
 def predict(url):
     result = preprocess(url)
