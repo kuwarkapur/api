@@ -32,7 +32,7 @@ collection=dbname['foood']
 
 app = Flask(__name__)
 
-def preprocess(url):
+def preprocess(url,methods=['GET']):
     
     img = io.imread(url)
 
@@ -58,16 +58,70 @@ def preprocess(url):
 
     
     return name
-@app.route("/predict/<path:url>")
+@app.route("/predict/<path:url>",methods=['GET'])
 def predict(url):
     result = preprocess(url)
-    doc=collection.find_one({'Category':str(result)})
+    doc=collection.find_one({'Category':str(result).lower().lstrip()})
     del(doc['_id'])
      
     return doc
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    if request.method == "POST":
+        url = request.json["url"]
+        result = preprocess(url)
+        doc=collection.find_one({'Category':str(result).lower().lstrip()})
+        del(doc['_id'])
+     
+        return doc
+
+
+
+@app.route("/food/<string:name>", methods=["GET", "PUT", "DELETE"])
+def food(name):
+    if request.method == "GET":
+        doc = collection.find_one({'Category': name})
+        if doc is not None:
+            del(doc['_id'])
+            return jsonify(doc)
+        else:
+            return jsonify({'error': 'Food item not found.'}), 404
+
+    elif request.method == "PUT":
+        data = request.get_json()
+        doc = collection.find_one({'Category': name})
+        if doc is not None:
+            collection.update_one({'Category': name}, {'$set': data})
+            return jsonify({'message': 'Food item updated.'})
+        else:
+            return jsonify({'error': 'Food item not found.'}), 404
+
+    elif request.method == "DELETE":
+        doc = collection.find_one({'Category': name})
+        if doc is not None:
+            collection.delete_one({'Category': name})
+            return jsonify({'message': 'Food item deleted.'})
+        else:
+            return jsonify({'error': 'Food item not found.'}), 404
                 
                 
-    
+# Define the custom error handler for 404 Error
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify(error=str(error)), 404
+
+
+# Define the custom error handler for 503 errors
+@app.errorhandler(503)
+def handle_503_error(error):
+    return jsonify(error=str(error)), 503
+
+
+# Define the custom error handler for 500 errors
+@app.errorhandler(500)
+def handle_500_error(error):
+    return jsonify(error=str(error)), 500    
 		
             
 
